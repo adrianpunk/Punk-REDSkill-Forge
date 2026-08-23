@@ -1,6 +1,6 @@
 ---
 name: punk-redskill-forge
-description: 将一个 Skill 整理为适合上传小红书 REDSkill 的独立副本，生成安全审计、提交字段和上传 ZIP。适用于用户提供链接、文件夹或 ZIP；不可用于自动运营小红书账号。
+description: 将一个 Skill 整理为适合上传小红书 REDSkill 的独立副本，生成可上传 ZIP、安全审计和逐项填写的提交资料建议。适用于用户提供链接、文件夹或 ZIP；不可用于自动运营小红书账号。
 ---
 
 # Punk REDSkill Forge
@@ -45,7 +45,7 @@ node scripts/prepare-redskill.mjs \
 
 4. 阅读 `REDSKILL-AUDIT.md`。所有阻断项必须通过明确的源文件改动或作者确认的移除/重构来解决。警告项也需要有记录在案的判断；“未命中规则”不等于绝对安全。
 5. 将副本与原件对照审查。保留真实功能及必需的代码/资源，只改写必要的说明、权限、数据使用、来源归属与用户可见声明。若所选 Skill 依赖文件夹外的资源，确保资源被复制且路径能从 ZIP 根目录解析。
-6. 将生成的 `REDSKILL-SUBMISSION-FIELDS.md` 作为真实的表单草案。标题、说明、标签和封面必须描述同一项实际能力；发布后保持 Skill ID 稳定。
+6. 将生成的 `REDSKILL-SUBMISSION-FIELDS.md` 和 `redskill-submission-draft.json` 作为提交资料草案。它们覆盖名称、Skill ID、短简介、详细介绍、适用场景、输入/输出、使用步骤、权限与数据说明、外部依赖、安全边界、权利声明与审核备注。依据实时页面删改或补齐字段，但标题、介绍、标签、封面和审核说明必须描述同一项实际能力；发布后保持 Skill ID 稳定。
 
 ## 无法直接完成时
 
@@ -60,7 +60,8 @@ node scripts/prepare-redskill.mjs \
 
 - `<slug>-redskill.zip`：`SKILL.md` 位于压缩包根目录；
 - `REDSKILL-AUDIT.md`：检查结果、警告、来源与剩余人工审核项；
-- `REDSKILL-SUBMISSION-FIELDS.md`：不夸大的提交字段草案；
+- `REDSKILL-SUBMISSION-FIELDS.md`：可逐项填写到小红书页面的中文提交资料建议；
+- `redskill-submission-draft.json`：同一份资料的结构化草案，便于复制到表单、二次编辑或交给其他工具；
 - 解压后的完整副本，供透明检查。
 
 根据 [预检结果说明](references/preflight-interpretation.md) 处理发现项。`references/redskill-upload.rule.yml` 是用于独立定性复核的可选 x-cmd 规则集，使用前先执行 `x rule lint`。

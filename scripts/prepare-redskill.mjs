@@ -9,7 +9,7 @@ const args = process.argv.slice(2);
 const value = (flag) => { const index = args.indexOf(flag); return index === -1 ? undefined : args[index + 1]; };
 const fail = (message) => { console.error(`ERROR: ${message}`); process.exit(2); };
 if (args.includes("--help") || args.includes("-h")) {
-  console.log("用法：node prepare-redskill.mjs --source <本地文件夹|ZIP|链接> --output <输出目录> [--skill <相对路径>] [--title <标题>] [--version <版本>]\n\n创建独立 REDSkill 候选副本，绝不修改源文件；仅在没有阻断项时生成上传 ZIP。");
+  console.log("用法：node prepare-redskill.mjs --source <本地文件夹|ZIP|链接> --output <输出目录> [--skill <相对路径>] [--display-name <展示名称>] [--skill-id <英文 ID>] [--short-intro <一句话简介>] [--version <版本>]\n\n创建独立 REDSkill 候选副本和提交资料草案，绝不修改源文件；仅在没有阻断项时生成上传 ZIP。");
   process.exit(0);
 }
 
@@ -125,22 +125,56 @@ function scanFile(file) {
   }
 }
 function scanCandidate() { walk(outputDir, scanFile); }
-function description() {
+function skillMetadata() {
   const text = readFileSync(join(outputDir, "SKILL.md"), "utf8");
   const frontmatter = text.match(/^---\s*\n([\s\S]*?)\n---/);
-  return frontmatter?.[1].match(/^description:\s*["']?(.+?)["']?\s*$/m)?.[1] || "[请人工补充准确的用户可见功能说明]";
+  if (!frontmatter) {
+    blockers.push({ kind: "BLOCKER_SKILL_FRONTMATTER", target: "SKILL.md:1", excerpt: "缺少 YAML frontmatter；请提供 name 与 description。" });
+    return { name: "", description: "[请人工补充准确的用户可见功能说明]" };
+  }
+  const name = frontmatter[1].match(/^name:\s*["']?(.+?)["']?\s*$/m)?.[1] || "";
+  const description = frontmatter[1].match(/^description:\s*["']?(.+?)["']?\s*$/m)?.[1] || "";
+  if (!name || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) blockers.push({ kind: "BLOCKER_SKILL_NAME", target: "SKILL.md:frontmatter", excerpt: "name 必须是小写字母、数字和连字符组成的稳定 Skill 标识。" });
+  if (!description) blockers.push({ kind: "BLOCKER_SKILL_DESCRIPTION", target: "SKILL.md:frontmatter", excerpt: "description 不能为空；请清楚说明用户可见能力。" });
+  return { name, description: description || "[请人工补充准确的用户可见功能说明]" };
 }
 function slugify(input) { return input.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "redskill"; }
+function compact(value) { return value.replace(/\s+/g, " ").trim(); }
+function json(value) { return JSON.stringify(value, null, 2) + "\n"; }
 function writeDocs(skillFile) {
   const inferred = basename(dirname(skillFile));
-  const title = value("--title") || inferred.replace(/[-_]+/g, " ");
+  const metadata = skillMetadata();
+  const title = value("--display-name") || value("--title") || inferred.replace(/[-_]+/g, " ");
   const version = value("--version") || "0.1.0";
-  const capability = description();
+  const capability = compact(metadata.description);
+  const skillId = value("--skill-id") || slugify(metadata.name || inferred);
+  const shortIntro = compact(value("--short-intro") || capability);
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(skillId)) blockers.push({ kind: "BLOCKER_SUBMISSION_SKILL_ID", target: "提交资料", excerpt: "Skill ID 建议使用小写字母、数字和连字符；当前值需要人工调整。" });
   const report = (items) => items.length ? items.map((item) => `- **${item.kind}** — \`${item.target}\`: ${item.excerpt}`).join("\n") : "- 机械扫描未发现问题。";
   writeFileSync(join(outputDir, "REDSKILL-AUDIT.md"), `# REDSkill 上传前审计\n\n- 来源：\`${sourceArg}\`\n- 选定的源 Skill：\`${relative(sourceRoot, skillFile)}\`\n- 候选版本：\`${version}\`\n- 状态：**${blockers.length ? "已阻断：解决全部阻断项后方可上传" : "未发现机械扫描阻断项：仍须人工复核"}**\n\n## 阻断项\n\n${report(blockers)}\n\n## 警告项\n\n${report(warnings)}\n\n## 打包说明\n\n${notes.length ? notes.map((note) => `- ${note}`).join("\n") : "- 候选副本由选定 Skill 文件夹复制而来，原始 Skill 未被修改。"}\n\n## 必须人工复核\n\n- 确认包内实际代码和提示词，与声明的功能、权限、数据使用及输出一致。\n- 确认全部依赖、第三方内容、名称和素材拥有适当许可证或授权。\n- 确认不存在小红书账号自动化、凭证处理、隐藏行为或未声明的网络/本地数据访问。\n- 提交前查看小红书最新 REDSkill 官方规范与上传页。\n`);
-  writeFileSync(join(outputDir, "REDSKILL-SUBMISSION-FIELDS.md"), `# REDSkill 提交字段草案\n\n- 建议标题：\`${title}\`\n- 建议版本：\`${version}\`\n- 功能说明：${capability}\n- 来源：\`${sourceArg}\`\n- 建议的数据/权限说明：\`仅使用用户在当前任务中提供的文字、图片和设置；不请求凭证、Cookie、API Key、浏览器数据或无关的本地文件。\`\n\n请复核并替换所有无法准确描述源 Skill 的字段。不要宣称官方背书、保证审核通过、保证结果，或声称包内并未实现的能力。\n`);
+  const submission = {
+    display_name: title,
+    skill_id: skillId,
+    version,
+    short_intro: shortIntro,
+    detailed_intro: `这个 Skill 的用途是：${capability}\n\n用户提供必要的输入后，Skill 按文档中声明的范围执行，并给出对应结果。请在提交前补充具体输入、输出和适用场景，且只保留源 Skill 已实现的内容。`,
+    applicable_scenarios: ["[请填写：用户在什么场景下需要它]"],
+    user_inputs: ["[请按 SKILL.md 填写：用户需要提供什么]"],
+    expected_outputs: ["[请按 SKILL.md 填写：用户会得到什么]"],
+    usage_steps: ["安装或添加该 Skill", "在对话中说明任务并提供必要材料", "确认输出是否符合实际需求"],
+    permission_and_data_statement: "仅处理用户在当前任务中主动提供的内容，以及实现声明功能所必需的文件或服务。不请求、不收集、不存储账号凭证、Cookie、API Key、浏览器数据或无关本地数据。",
+    external_dependencies: ["[请填写：无；或列出实际依赖的工具、网络服务及用途]"],
+    safety_boundary: "不自动操作小红书账号，不发布笔记、不评论、不回复、不点赞、不关注；不含隐藏行为，不诱导 Agent 超出用户明确授权范围。",
+    rights_and_attribution: "[请填写：源代码、第三方依赖、商标、图片及其他素材的许可证/署名情况]",
+    review_note: "候选包由原始 Skill 的独立副本整理而来。请结合 REDSKILL-AUDIT.md 核对实际能力、权限、数据使用与文档描述一致。",
+    source: sourceArg,
+    audit_file: "REDSKILL-AUDIT.md",
+    operator_checklist: ["删除所有方括号中的待补充内容", "按实时上传页逐项核对字段名称与长度限制", "确保名称、简介、封面、介绍和 ZIP 中实际能力一致", "审核结果以小红书最终审核为准"]
+  };
+  writeFileSync(join(outputDir, "REDSKILL-SUBMISSION-FIELDS.md"), `# REDSkill 提交资料建议\n\n这是一份给小红书上传页面使用的逐项草案。内容只可描述此包中实际实现的能力；带 \`[请填写]\` 的项目需要作者补齐。页面字段、长度限制和可选项会变化，以实时页面为准。\n\n## 基础信息\n\n| 提交项 | 建议内容 | 提交前检查 |\n| --- | --- | --- |\n| 展示名称 | ${title} | 使用用户能看懂的中文或品牌名；以页面长度限制为准。 |\n| Skill ID | \`${skillId}\` | 建议保持小写英文、数字和连字符；发布后稳定不改。 |\n| 版本 | \`${version}\` | 与本次 ZIP 内容对应。 |\n| 一句话简介 | ${shortIntro} | 不夸大，不承诺审核或结果。 |\n\n## 详细介绍\n\n${submission.detailed_intro}\n\n## 适用场景\n\n${submission.applicable_scenarios.map((item) => `- ${item}`).join("\n")}\n\n## 用户输入\n\n${submission.user_inputs.map((item) => `- ${item}`).join("\n")}\n\n## 预期输出\n\n${submission.expected_outputs.map((item) => `- ${item}`).join("\n")}\n\n## 使用步骤\n\n${submission.usage_steps.map((item, index) => `${index + 1}. ${item}`).join("\n")}\n\n## 权限与数据说明\n\n${submission.permission_and_data_statement}\n\n## 外部依赖\n\n${submission.external_dependencies.map((item) => `- ${item}`).join("\n")}\n\n## 安全边界\n\n${submission.safety_boundary}\n\n## 权利与署名\n\n${submission.rights_and_attribution}\n\n## 审核备注\n\n${submission.review_note}\n\n## 提交前勾选\n\n${submission.operator_checklist.map((item) => `- [ ] ${item}`).join("\n")}\n`);
+  writeFileSync(join(outputDir, "redskill-submission-draft.json"), json(submission));
   writeFileSync(join(outputDir, "README-REDSKILL.md"), `# ${title}\n\n这是根据 \`${sourceArg}\` 单独整理的 REDSkill 候选副本，用于透明检查和 REDSkill 提交前审阅。\n\n## 声明功能\n\n${capability}\n\n## 边界\n\n本包不得自动操作小红书账号、收集凭证/Cookie/API Key、访问无关本地数据或执行隐藏行为。提交前请阅读 \`REDSKILL-AUDIT.md\`。\n`);
-  return slugify(title);
+  return skillId;
 }
 
 try {

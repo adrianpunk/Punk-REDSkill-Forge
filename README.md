@@ -18,7 +18,8 @@
 - 原始 Skill 保持不变，另建可审查的上传副本。
 - 检查疑似密钥、Cookie、隐藏指令、小红书账号自动化及第三方品牌/素材风险。
 - 将常见的跨目录风格资源复制进副本，并修正其在 ZIP 中的相对路径。
-- 生成 `REDSKILL-AUDIT.md`、`REDSKILL-SUBMISSION-FIELDS.md` 和根目录包含 `SKILL.md` 的上传 ZIP。
+- 生成根目录包含 `SKILL.md` 的上传 ZIP，并输出 `REDSKILL-AUDIT.md`。
+- 生成 `REDSKILL-SUBMISSION-FIELDS.md` 和 `redskill-submission-draft.json`：包括 Skill ID、名称、短简介、详细介绍、适用场景、输入/输出、使用步骤、权限与数据、外部依赖、安全边界、权利与审核备注等逐项建议。
 - 发现高风险阻断项时，不生成上传 ZIP，而是输出可定位的问题清单。
 
 ## 边界
@@ -32,7 +33,12 @@
 ```sh
 node scripts/prepare-redskill.mjs \
   --source "<链接、本地文件夹或 ZIP>" \
-  --output "<输出目录>"
+  --output "<输出目录>" \
+  --display-name "<小红书展示名称>" \
+  --skill-id "<稳定的英文 ID>" \
+  --short-intro "<一句话简介>"
 ```
 
 若来源中有多个 Skill，加上 `--skill "<相对目录或 SKILL.md>"` 指定目标。
+
+不填这三个可选字段时，工具会根据源 Skill 生成草案；提交前请在 `REDSKILL-SUBMISSION-FIELDS.md` 中按真实能力和实时页面逐项确认。
