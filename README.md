@@ -19,7 +19,7 @@
 - 检查疑似密钥、Cookie、隐藏指令、小红书账号自动化及第三方品牌/素材风险。
 - 将常见的跨目录风格资源复制进副本，并修正其在 ZIP 中的相对路径。
 - 生成根目录包含 `SKILL.md` 的上传 ZIP，并输出 `REDSKILL-AUDIT.md`。
-- 生成 `REDSKILL-SUBMISSION-FIELDS.md` 和 `redskill-submission-draft.json`：严格按当前上传页顺序给出上传 ZIP、Skill 名称、Skill ID、简介和 Skill 介绍，可直接复制填写。
+- 生成 `REDSKILL-SUBMISSION-FIELDS.md` 和 `redskill-submission-draft.json`：先核对官方源码上传要求，再给出名称、英文内部 ID、简介、版本、来源、权限和安全边界建议。
 - 发现高风险阻断项时，不生成上传 ZIP，而是输出可定位的问题清单。
 
 ## 边界
@@ -37,9 +37,10 @@ node scripts/prepare-redskill.mjs \
   --display-name "<小红书展示名称>" \
   --skill-id "<稳定的英文 ID>" \
   --short-intro "<简介>" \
-  --skill-introduction "<Skill 介绍>"
+  --source-type "<原创或转载>" \
+  --permissions "<不需要权限或所需权限>"
 ```
 
 若来源中有多个 Skill，加上 `--skill "<相对目录或 SKILL.md>"` 指定目标。
 
-不填这三个可选字段时，工具会根据源 Skill 生成草案；提交前请在 `REDSKILL-SUBMISSION-FIELDS.md` 中按真实能力和实时页面逐项确认。表单字段依据公开实操截图整理，实时页面优先。
+不填这些可选字段时，工具会根据源 Skill 生成草案。`--skill-id` 是 Forge 管理包名使用的稳定英文内部 ID，不代表官方页面一定存在同名输入框。提交前请在 `REDSKILL-SUBMISSION-FIELDS.md` 中按真实能力和实时页面逐项确认。

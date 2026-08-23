@@ -45,7 +45,7 @@ node scripts/prepare-redskill.mjs \
 
 4. 阅读 `REDSKILL-AUDIT.md`。所有阻断项必须通过明确的源文件改动或作者确认的移除/重构来解决。警告项也需要有记录在案的判断；“未命中规则”不等于绝对安全。
 5. 将副本与原件对照审查。保留真实功能及必需的代码/资源，只改写必要的说明、权限、数据使用、来源归属与用户可见声明。若所选 Skill 依赖文件夹外的资源，确保资源被复制且路径能从 ZIP 根目录解析。
-6. 阅读 [上传页字段对照](references/redskill-upload-form.md)，再根据选定 `SKILL.md` 的实际能力写 `REDSKILL-SUBMISSION-FIELDS.md` 和 `redskill-submission-draft.json`。这两份交付必须只覆盖实时页面要求的五项：上传源码 ZIP、Skill 名称、Skill ID、简介、Skill 介绍。不要把“适用场景、权限、权利声明”等审核辅助信息虚构成页面字段；这些留在审计报告中。发布后保持 Skill ID 稳定。
+6. 阅读 [上传页字段对照](references/redskill-upload-form.md)，再根据选定 `SKILL.md` 的实际能力写 `REDSKILL-SUBMISSION-FIELDS.md` 和 `redskill-submission-draft.json`。先写当前官方页面可核验的源码上传要求：含 `SKILL.md` 的文件夹或 ZIP、单文件最大 10MB、总大小不超过 30MB、原创/转载选择和《Skill 发布安全规范》。再单独给出展示名称、英文内部 ID、简介、版本、来源、权限和安全边界建议。不要把 Forge 建议伪装成固定页面字段；第二步以用户实时页面为准。
 
 ## 无法直接完成时
 
@@ -60,8 +60,8 @@ node scripts/prepare-redskill.mjs \
 
 - `<slug>-redskill.zip`：`SKILL.md` 位于压缩包根目录；
 - `REDSKILL-AUDIT.md`：检查结果、警告、来源与剩余人工审核项；
-- `REDSKILL-SUBMISSION-FIELDS.md`：按上传页顺序写好的 ZIP、Skill 名称、Skill ID、简介和 Skill 介绍；
-- `redskill-submission-draft.json`：同一份五字段资料的结构化草案，便于复制到表单；
+- `REDSKILL-SUBMISSION-FIELDS.md`：分开记录官方已确认的上传要求和 Forge 填写建议；
+- `redskill-submission-draft.json`：同一份提交建议的结构化草案，便于按实时页面复制；
 - 解压后的完整副本，供透明检查。
 
 根据 [预检结果说明](references/preflight-interpretation.md) 处理发现项。`references/redskill-upload.rule.yml` 是用于独立定性复核的可选 x-cmd 规则集，使用前先执行 `x rule lint`。
