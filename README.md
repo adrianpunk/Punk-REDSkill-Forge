@@ -44,3 +44,7 @@ node scripts/prepare-redskill.mjs \
 若来源中有多个 Skill，加上 `--skill "<相对目录或 SKILL.md>"` 指定目标。
 
 不填这些可选字段时，工具会根据源 Skill 生成草案。`--skill-id` 是 Forge 管理包名使用的稳定英文内部 ID，不代表官方页面一定存在同名输入框。提交前请在 `REDSKILL-SUBMISSION-FIELDS.md` 中按真实能力和实时页面逐项确认。
+
+## License
+
+本仓库内容采用 [MIT License](./LICENSE) 发布；仓库中另有明确授权或声明的第三方素材除外。
