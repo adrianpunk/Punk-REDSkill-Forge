@@ -58,6 +58,8 @@ Punk REDSkill Forge 采用个人非商用 + 商业付费双轨授权：
 
 ## 关于作者
 
+**Punk**
+
 AI视觉/AI小白教程<br>
 中科大硕士｜Punk Skills 作者｜3个月挣8位数<br>
 AfterNoise社群发起人
